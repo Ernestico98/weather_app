@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Weather</string>
+    <string name="title_activity_detail">DetailActivity</string>
+    
+    //Navigation Strings
+    <string name="main_navigation_weather">Weather</string>
+    <string name="main_navigation_search">Search</string>
+    <string name="main_navigation_about">About</string>
+</resources>
