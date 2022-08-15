@@ -69,6 +69,7 @@ fun SearchScreen(
             onClick = {
                 mainViewModel.setUseLocation(true)
                 mainViewModel.setWeatherResponse(null)
+                mainViewModel.setForecastResponse(null)
                 fetchLocationAndWeather(fusedLocationProviderClient, mainViewModel)
 
                 mainViewModel.setBottomNavigationIndex(0)
@@ -166,6 +167,7 @@ fun ShowPlacesList(
                         onClick = {
                             mainViewModel.setUseLocation(false)
                             mainViewModel.setWeatherResponse(null)
+                            mainViewModel.setForecastResponse(null)
                             mainViewModel.setSelectedLocation(data.name)
                             mainViewModel.setLocation(lon = data.lon!!, lat = data.lat!!)
                             mainViewModel.fetchWeather(lon = data.lon, lat = data.lat)

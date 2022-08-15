@@ -14,6 +14,7 @@ fun fetchLocationAndWeather(fusedLocationProviderClient: FusedLocationProviderCl
             Log.d("GET LOCATION SUCCESS", "${it.latitude}, ${it.longitude}")
             mainViewModel.setLocation(lon = it.longitude, lat = it.latitude)
             mainViewModel.fetchWeather(lon = it.longitude, lat = it.latitude)
+            mainViewModel.fetchForecast(lon = it.longitude, lat = it.latitude)
         }
     }
 }

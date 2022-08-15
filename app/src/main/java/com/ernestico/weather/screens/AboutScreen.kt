@@ -1,7 +1,7 @@
 package com.ernestico.weather.screens
 
-import android.graphics.Paint
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
@@ -76,6 +75,22 @@ fun AboutScreen(
 
                 Spacer(modifier = Modifier.height(15.dp))
 
+                val mUriHandler = LocalUriHandler.current
+                Row {
+                    Text(text = "Project Repository")
+                    Image(
+                        painter = painterResource(id = R.drawable.github),
+                        contentDescription = "Github icon",
+                        modifier = Modifier.size(26.dp).padding(5.dp)
+                            .clickable {
+                                mUriHandler.openUri("https://github.com/Ernestico98/weather_app")
+                            }
+                            .size(26.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(15.dp))
+
                 Row {
                     Text(text = "Check out my")
                     Image(
@@ -90,7 +105,6 @@ fun AboutScreen(
         }
     }
 }
-
 
 @Composable
 fun HyperLinkText(

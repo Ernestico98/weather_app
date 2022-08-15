@@ -7,10 +7,13 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.ernestico.weather.data.ForecastApiProvider
 import com.ernestico.weather.data.GeoApiProvider
 import com.ernestico.weather.data.WeatherApiProvider
+import com.ernestico.weather.data.cb.ForecastResult
 import com.ernestico.weather.data.cb.GeoResult
 import com.ernestico.weather.data.cb.WeatherResult
+import com.ernestico.weather.data.forecast_response.ForecastData
 import com.ernestico.weather.data.geo_response.GeoDataItem
 import com.ernestico.weather.data.weather_response.WeatherData
 import com.ernestico.weather.navigation.BottomNavigationScreens
@@ -19,13 +22,16 @@ import java.util.*
 
 private val TAG = "MAIN_VIEW_MODEL"
 
-class MainViewModel : ViewModel(), WeatherResult, GeoResult {
+class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
 
     private val _geoResponse = MutableLiveData<List<GeoDataItem>?>()
     val geoResponse: LiveData<List<GeoDataItem>?> = _geoResponse
 
     private val _weatherResponse = MutableLiveData<WeatherData?>()
     val weatherResponse: LiveData<WeatherData?> = _weatherResponse
+
+    private val _forecastResponse = MutableLiveData<ForecastData?>()
+    val forecastResponse: LiveData<ForecastData?> = _forecastResponse
 
     private val _latitude = MutableLiveData<Double?>()
     val latitude: LiveData<Double?> = _latitude
@@ -53,6 +59,7 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult {
     init {
         _geoResponse.value = null
         _weatherResponse.value = null
+        _forecastResponse.value = null
         _latitude.value = null
         _longitude.value = null
         _useLocation.value = true
@@ -70,12 +77,20 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult {
         GeoApiProvider()
     }
 
+    private val forecastProvider by lazy {
+        ForecastApiProvider()
+    }
+
     fun fetchWeather(lon: Double, lat: Double) {
         weatherProvider.fetchWeather(lon = lon, lat = lat, cb = this)
     }
 
     fun fetchGeo(place : String) {
         geoProvider.fetchGeo(place = place, cb = this)
+    }
+
+    fun fetchForecast(lon: Double, lat: Double) {
+        forecastProvider.fetchForecast(lon = lon, lat = lat, cb = this)
     }
 
     fun setLocation(lon: Double?, lat: Double?) {
@@ -107,6 +122,10 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult {
         _selectedLocation.value = place
     }
 
+    fun setForecastResponse(forecast: ForecastData?) {
+        _forecastResponse.value = forecast
+    }
+
     override fun onWeatherFetchedSuccess(weather: WeatherData) {
         Log.d(TAG, "weather fetch $weather")
         _weatherResponse.value = weather
@@ -125,5 +144,12 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult {
         Log.d(TAG, "geo fetch failed")
     }
 
+    override fun onForecastFetchedSuccess(forecast: ForecastData) {
+        Log.d(TAG, "forecast fetched $forecast")
+        _forecastResponse.value = forecast
+    }
 
+    override fun onForecastFetchedFailed() {
+        Log.d(TAG, "forecast fetch failed")
+    }
 }
