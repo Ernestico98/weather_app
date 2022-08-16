@@ -17,6 +17,9 @@ import com.ernestico.weather.data.forecast_response.ForecastData
 import com.ernestico.weather.data.geo_response.GeoDataItem
 import com.ernestico.weather.data.weather_response.WeatherData
 import com.ernestico.weather.navigation.BottomNavigationScreens
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -77,6 +80,8 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
     val dayTemp = mutableListOf<String>()
     val nightIcon = mutableListOf<String>()
     val nightTemp = mutableListOf<String>()
+
+    private val firestore = Firebase.firestore
 
     init {
         _geoResponse.value = null
@@ -150,7 +155,18 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
 
     override fun onWeatherFetchedSuccess(weather: WeatherData) {
         Log.d(TAG, "weather fetch $weather")
+
         _weatherResponse.value = weather
+
+        val record = WeatherRecord(
+            id = _weatherResponse.value!!.id!!,
+            timeStamp = Timestamp.now(),
+            name = _weatherResponse.value!!.name!!,
+            longitude = _weatherResponse.value!!.coord!!.lon!!,
+            latitude = _weatherResponse.value!!.coord!!.lat!!
+        )
+
+        sendWeatherRecord(record)
     }
 
     override fun onWeatherFetchedFailed() {
@@ -221,5 +237,23 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
 
     override fun onForecastFetchedFailed() {
         Log.d(TAG, "forecast fetch failed")
+    }
+
+    private val WEATHER_COLLECTION = "WeatherApiCalls"
+
+    // This part is to record to firestore the Calls to Weather Api
+    data class WeatherRecord (
+        val id : Int,
+        val timeStamp : Timestamp,
+        val name : String,
+        val longitude : Double,
+        val latitude : Double
+    )
+
+    fun sendWeatherRecord(record: WeatherRecord) {
+        firestore.collection(WEATHER_COLLECTION).document()
+            .set(record)
+            .addOnSuccessListener { Log.d(TAG, "Succesfully sent weather record to firestore ${record}") }
+            .addOnFailureListener { Log.d(TAG, "Unable to write to firestore. Error: $it") }
     }
 }

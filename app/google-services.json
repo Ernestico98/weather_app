@@ -1,0 +1,39 @@
+  {
+  "project_info": {
+    "project_number": "698531206695",
+    "project_id": "weatherapp-51cce",
+    "storage_bucket": "weatherapp-51cce.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698531206695:android:ab2c19777e3f997a5fe002",
+        "android_client_info": {
+          "package_name": "com.ernestico.weather"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "698531206695-81ekjfruvke31hnjdlmco8sk20kurj1d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAEgoHhQF3Q7-ZntcKak_wjW4UEaO8fVI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "698531206695-81ekjfruvke31hnjdlmco8sk20kurj1d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
