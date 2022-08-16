@@ -1,9 +1,8 @@
 package com.ernestico.weather
 
-import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,12 +12,27 @@ import com.ernestico.weather.data.WeatherApiProvider
 import com.ernestico.weather.data.cb.ForecastResult
 import com.ernestico.weather.data.cb.GeoResult
 import com.ernestico.weather.data.cb.WeatherResult
+import com.ernestico.weather.data.forecast_response.Forecast
 import com.ernestico.weather.data.forecast_response.ForecastData
 import com.ernestico.weather.data.geo_response.GeoDataItem
 import com.ernestico.weather.data.weather_response.WeatherData
 import com.ernestico.weather.navigation.BottomNavigationScreens
-import com.google.android.gms.location.FusedLocationProviderClient
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
+import kotlin.collections.List
+import kotlin.collections.MutableList
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.contains
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.sorted
+import kotlin.collections.sortedBy
+import kotlin.collections.toList
+import kotlin.collections.toSortedMap
 
 private val TAG = "MAIN_VIEW_MODEL"
 
@@ -55,6 +69,14 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
 
     private val _selectedLocation = MutableLiveData<String?> ()
     val selectedLocation : LiveData<String?> = _selectedLocation
+
+    val dayOfTheWeek = mutableListOf<String>()
+    val dayOfTheMonth = mutableListOf<String>()
+    val month = mutableListOf<String>()
+    val dayIcon = mutableListOf<String>()
+    val dayTemp = mutableListOf<String>()
+    val nightIcon = mutableListOf<String>()
+    val nightTemp = mutableListOf<String>()
 
     init {
         _geoResponse.value = null
@@ -144,8 +166,56 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
         Log.d(TAG, "geo fetch failed")
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onForecastFetchedSuccess(forecast: ForecastData) {
         Log.d(TAG, "forecast fetched $forecast")
+
+        //Process forecast
+        val sortedForecast = forecast.list!!.sortedBy { item -> item.dt_txt }
+        var dailyForecast = mutableMapOf<String, MutableList<Forecast>>()
+        for (forecast in sortedForecast) {
+            val (date, time) = forecast.dt_txt!!.split(' ')
+            val timeDateUTC = ZonedDateTime.parse(date + "T" + time + "Z")
+            val timeZoneConverted = timeDateUTC.withZoneSameInstant(ZoneId.systemDefault())
+            val convertedDate = timeZoneConverted.toLocalDate().toString()
+
+            if (convertedDate == LocalDate.now().toString())
+                continue
+
+            if (!(convertedDate in dailyForecast))
+                dailyForecast[convertedDate] = mutableListOf<Forecast>()
+
+            dailyForecast[convertedDate]!!.add(forecast)
+        }
+
+        val sortedDailyForecast = dailyForecast.toSortedMap()
+        val keys = sortedDailyForecast.keys.toList().sorted()
+        dayOfTheWeek.clear()
+        dayOfTheMonth.clear()
+        month.clear()
+        dayIcon.clear()
+        dayTemp.clear()
+        nightIcon.clear()
+        nightTemp.clear()
+
+        for (i in 0..2) {
+            val key = keys[i]
+            val date = LocalDate.parse(key)
+
+            val weekDay = date.dayOfWeek.toString().subSequence(0, 3).toString()
+            dayOfTheWeek.add(weekDay)
+
+            dayOfTheMonth.add(date.dayOfMonth.toString())
+
+            month.add(date.monthValue.toString())
+
+            dayIcon.add(sortedDailyForecast[key]!![3].weather!![0]!!.icon!!)
+            dayTemp.add(sortedDailyForecast[key]!![3].main!!.temp.toString())
+
+            nightIcon.add(sortedDailyForecast[key]!![7].weather!![0]!!.icon!!)
+            nightTemp.add(sortedDailyForecast[key]!![7].main!!.temp.toString())
+        }
+
         _forecastResponse.value = forecast
     }
 

@@ -38,6 +38,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.ernestico.weather.MainViewModel
 import com.ernestico.weather.aimations.LoadingAnimation
+import com.ernestico.weather.data.AppPreferences
 import com.ernestico.weather.fetchLocationAndWeather
 import com.ernestico.weather.navigation.BottomNavigationScreens
 import com.ernestico.weather.ui.theme.DarkColors
@@ -48,7 +49,8 @@ import com.google.android.gms.location.FusedLocationProviderClient
 fun SearchScreen(
     mainViewModel: MainViewModel,
     navController: NavController,
-    fusedLocationProviderClient: FusedLocationProviderClient
+    fusedLocationProviderClient: FusedLocationProviderClient,
+    darkMode : MutableState<Boolean>
 ) {
     mainViewModel.setTopBarText("Search Location")
 
@@ -139,19 +141,25 @@ fun SearchScreen(
         }
 
         if (showList.value)
-            ShowPlacesList(mainViewModel = mainViewModel, navController = navController)
+            ShowPlacesList(mainViewModel = mainViewModel,
+                navController = navController,
+                darkMode = darkMode,
+                fusedLocationProviderClient = fusedLocationProviderClient
+            )
     }
 }
 
 @Composable
 fun ShowPlacesList(
     mainViewModel: MainViewModel,
-    navController: NavController
+    navController: NavController,
+    darkMode: MutableState<Boolean>,
+    fusedLocationProviderClient: FusedLocationProviderClient
 ) {
     val geoData = mainViewModel.geoResponse.observeAsState()
 
     if (geoData.value == null) {
-        LoadingAnimation()
+        LoadingAnimation(darkMode = darkMode)
     } else {
         LazyColumn(
             modifier = Modifier
@@ -171,6 +179,7 @@ fun ShowPlacesList(
                             mainViewModel.setSelectedLocation(data.name)
                             mainViewModel.setLocation(lon = data.lon!!, lat = data.lat!!)
                             mainViewModel.fetchWeather(lon = data.lon, lat = data.lat)
+                            fetchLocationAndWeather(fusedLocationProviderClient, mainViewModel)
 
                             mainViewModel.setBottomNavigationIndex(0)
                             mainViewModel.navigationStack.value!!.push(BottomNavigationScreens.Search)

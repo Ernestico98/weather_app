@@ -42,14 +42,12 @@ class MainActivity : ComponentActivity() {
     private val mainViewModel : MainViewModel by viewModels()
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        createIconMap()
         val preferences = AppPreferences(this)
+        createIconMap()
 
         setContent {
 
@@ -99,14 +97,6 @@ class MainActivity : ComponentActivity() {
                                 }
 
                             }
-
-//                            Switch(
-//                                checked = darkMode.value,
-//                                onCheckedChange =  {
-//                                    darkMode.value = !darkMode.value
-//                                    preferences.setDarkTheme(darkMode.value)
-//                                }
-//                            )
                         }
 
                         Scaffold(
@@ -127,13 +117,15 @@ class MainActivity : ComponentActivity() {
                                     composable(BottomNavigationScreens.Weather.route) {
                                         WeatherScreen(
                                             mainViewModel = mainViewModel,
+                                            darkMode = darkMode
                                         )
                                     }
                                     composable(BottomNavigationScreens.Search.route) {
                                         SearchScreen(
                                             mainViewModel = mainViewModel,
                                             navController = navController,
-                                            fusedLocationProviderClient = fusedLocationProviderClient
+                                            fusedLocationProviderClient = fusedLocationProviderClient,
+                                            darkMode = darkMode
                                         )
                                     }
                                     composable(BottomNavigationScreens.About.route) {

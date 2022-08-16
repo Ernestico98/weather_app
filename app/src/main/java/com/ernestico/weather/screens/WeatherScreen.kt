@@ -10,7 +10,9 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -32,15 +35,18 @@ import coil.request.ImageRequest
 import com.ernestico.weather.MainViewModel
 import com.ernestico.weather.R
 import com.ernestico.weather.aimations.LoadingAnimation
+import com.ernestico.weather.data.AppPreferences
 import com.google.android.gms.location.FusedLocationProviderClient
 
 @Composable
 fun WeatherScreen(
     mainViewModel: MainViewModel,
+    darkMode : MutableState<Boolean>
 ) {
     mainViewModel.setTopBarText("Weather Status")
 
     val weather = mainViewModel.weatherResponse.observeAsState()
+    val forecast = mainViewModel.forecastResponse.observeAsState()
 
     if (weather.value != null) {
         Column(
@@ -50,11 +56,11 @@ fun WeatherScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "${weather.value!!.weather!![0].main}",
-                fontSize = 22.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
 
@@ -62,29 +68,28 @@ fun WeatherScreen(
                 painter = painterResource(id = mainViewModel.icons[weather.value!!.weather!![0].icon]!!),
                 contentDescription = "Weather Icon",
                 modifier = Modifier
-                    .size(300.dp)
+                    .size(200.dp)
                     .scale(1.6f),
                 contentScale = ContentScale.Crop,
             )
 
-            Spacer(modifier = Modifier.height(15.dp))
+//            Spacer(modifier = Modifier.height(5.dp))
             
             Text(
                 text = "Weather at ${if (mainViewModel.useLocation.value == true) "User's Location" else mainViewModel.selectedLocation.value}",
-                modifier = Modifier.padding(bottom = 5.dp),
-                fontSize = 20.sp,
+                fontSize = 18.sp,
             )
 
             Card(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(10.dp),
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
                 elevation = 10.dp
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp),
+                        .padding(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(
@@ -99,7 +104,7 @@ fun WeatherScreen(
                         Text(text = "Temp.: ${weather.value!!.main!!.temp} \u2103")
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row () {
                         Text(text = "Min.: ${weather.value!!.main!!.temp_min} \u2103")
@@ -107,7 +112,7 @@ fun WeatherScreen(
                         Text(text = "Max.: ${weather.value!!.main!!.temp_max} \u2103")
                     }
                     
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     
                     Row() {
                         Text(text = "Pressure: ${weather.value!!.main!!.pressure} hPa")
@@ -115,26 +120,105 @@ fun WeatherScreen(
                         Text(text = "Humidity: ${weather.value!!.main!!.humidity}%")
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row() {
                         Text(text = "Wind Speed: ${weather.value!!.wind!!.speed} m/s")
                         Spacer(modifier = Modifier.width(20.dp))
                         Text(text = "Clouds: ${weather.value!!.clouds!!.all}%")
                     }
+                }
+            }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Row() {
-                        Text(text = "Visibility: ${weather.value!!.visibility} m")
-                    }
-
-
-
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (forecast.value != null) {
+                    ShowForecastData(mainViewModel)
+                } else {
+                    LoadingAnimation(darkMode = darkMode)
                 }
             }
         }
     } else {
-        LoadingAnimation()
+        LoadingAnimation(darkMode = darkMode)
+    }
+}
+
+
+@Composable
+fun ShowForecastData(mainViewModel: MainViewModel) {
+    Card(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp),
+        elevation = 10.dp
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header
+            Row(modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 10.dp, start = 10.dp, end = 10.dp)
+            ) {
+                Spacer(modifier = Modifier.weight(0.15f))
+                Row(
+                    modifier = Modifier.weight(0.85f),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    for (i in 0..2) {
+                        Text(text = "${mainViewModel.dayOfTheWeek[i]} - ${mainViewModel.dayOfTheMonth[i]}")
+                    }
+                }
+            }
+
+            Row(modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp)) {
+                Column(modifier = Modifier
+                    .weight(0.15f)
+                    .height(180.dp)
+                    .fillMaxWidth(),
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Image(painter = painterResource(id = R.drawable.ic_sun), contentDescription = "Day icon")
+                    Image(painter = painterResource(id = R.drawable.ic_moon), contentDescription = "Night icon")
+                }
+
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .weight(0.85f),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        for (i in 0..2) {
+                            Card(
+                                elevation = 10.dp
+                            ) {
+                                Column(modifier = Modifier.padding(6.dp),) {
+                                    Image(
+                                        painter = painterResource(id = mainViewModel.icons[mainViewModel.dayIcon[i]]!!),
+                                        contentDescription = "Weather Icon",
+                                        modifier = Modifier.size(60.dp)
+                                    )
+
+                                    Text(text = "${mainViewModel.dayTemp[i]} ℃")
+
+                                    Image(
+                                        painter = painterResource(id = mainViewModel.icons[mainViewModel.nightIcon[i]]!!),
+                                        contentDescription = "Weather Icon",
+                                        modifier = Modifier.size(60.dp)
+                                    )
+
+                                    Text(text = "${mainViewModel.nightTemp[i]} ℃")
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

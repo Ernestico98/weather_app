@@ -118,7 +118,7 @@ fun HyperLinkText(
         append(text)
         addStyle(
             style = SpanStyle(
-                color = Color.Blue,
+                color = Color(0xFF9CCC65),
                 textDecoration = TextDecoration.Underline
             ), start = mStartIndex, end = mEndIndex
         )
