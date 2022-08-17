@@ -60,6 +60,28 @@ class MainActivity : ComponentActivity() {
             ) {
                 val navController = rememberNavController()
 
+                if (darkMode.value) {
+                    SystemUI(window = window).setStatusBarColor(
+                        darkColors().primary,
+                        darkIcons = false
+                    )
+                    SystemUI(window = window).setNavigationBarColor(
+                        darkColors().primary,
+                        darkIcons = false
+                    )
+                }
+
+                else {
+                    SystemUI(window = window).setStatusBarColor(
+                        lightColors().primary,
+                        darkIcons = true
+                    )
+                    SystemUI(window = window).setNavigationBarColor(
+                        lightColors().primary,
+                        darkIcons = true
+                    )
+                }
+
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -82,7 +104,7 @@ class MainActivity : ComponentActivity() {
                                     preferences.setDarkTheme(darkMode.value)
                                 },
                                 modifier = Modifier.padding(end=10.dp)
-                                    .size(40.dp)
+                                    .size(30.dp)
                             ) {
                                 if (darkMode.value) {
                                     Icon(
