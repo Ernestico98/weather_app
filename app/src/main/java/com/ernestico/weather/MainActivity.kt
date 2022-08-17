@@ -117,7 +117,8 @@ class MainActivity : ComponentActivity() {
                                     composable(BottomNavigationScreens.Weather.route) {
                                         WeatherScreen(
                                             mainViewModel = mainViewModel,
-                                            darkMode = darkMode
+                                            darkMode = darkMode,
+                                            fusedLocationProviderClient = fusedLocationProviderClient
                                         )
                                     }
                                     composable(BottomNavigationScreens.Search.route) {

@@ -36,112 +36,133 @@ import com.ernestico.weather.MainViewModel
 import com.ernestico.weather.R
 import com.ernestico.weather.aimations.LoadingAnimation
 import com.ernestico.weather.data.AppPreferences
+import com.ernestico.weather.fetchLocationAndWeather
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.location.FusedLocationProviderClient
 
 @Composable
 fun WeatherScreen(
     mainViewModel: MainViewModel,
-    darkMode : MutableState<Boolean>
+    darkMode : MutableState<Boolean>,
+    fusedLocationProviderClient: FusedLocationProviderClient
+
 ) {
     mainViewModel.setTopBarText("Weather Status")
 
     val weather = mainViewModel.weatherResponse.observeAsState()
     val forecast = mainViewModel.forecastResponse.observeAsState()
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
 
-    if (weather.value != null) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = "${weather.value!!.weather!![0].main}",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+    SwipeRefresh(
+        state = swipeRefreshState,
+        onRefresh = {
+                    mainViewModel.setWeatherResponse(null)
+                    fetchLocationAndWeather(fusedLocationProviderClient, mainViewModel)
+        },
+        indicator = { state, trigger ->
+            SwipeRefreshIndicator(
+                state = state,
+                refreshTriggerDistance = trigger,
+                scale = true,
             )
+        }
+    ) {
 
-            Image(
-                painter = painterResource(id = mainViewModel.icons[weather.value!!.weather!![0].icon]!!),
-                contentDescription = "Weather Icon",
-                modifier = Modifier
-                    .size(200.dp)
-                    .scale(1.6f),
-                contentScale = ContentScale.Crop,
-            )
-
-//            Spacer(modifier = Modifier.height(5.dp))
-            
-            Text(
-                text = "Weather at ${if (mainViewModel.useLocation.value == true) "User's Location" else mainViewModel.selectedLocation.value}",
-                fontSize = 18.sp,
-            )
-
-            Card(
+        if (weather.value != null) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
-                elevation = 10.dp
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "${weather.value!!.weather!![0].main}",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Image(
+                    painter = painterResource(id = mainViewModel.icons[weather.value!!.weather!![0].icon]!!),
+                    contentDescription = "Weather Icon",
+                    modifier = Modifier
+                        .size(200.dp)
+                        .scale(1.6f),
+                    contentScale = ContentScale.Crop,
+                )
+
+                Text(
+                    text = "Weather at ${if (mainViewModel.useLocation.value == true) "User's Location" else mainViewModel.selectedLocation.value}",
+                    fontSize = 18.sp,
+                )
+
+                Card(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    elevation = 10.dp
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.temp),
-                            contentDescription = "Thermometer icon",
-                            modifier = Modifier.size(40.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(text = "Temp.: ${weather.value!!.main!!.temp} \u2103")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.temp),
+                                contentDescription = "Thermometer icon",
+                                modifier = Modifier.size(40.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(text = "Temp.: ${weather.value!!.main!!.temp} \u2103")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row() {
+                            Text(text = "Min.: ${weather.value!!.main!!.temp_min} \u2103")
+                            Spacer(modifier = Modifier.width(20.dp))
+                            Text(text = "Max.: ${weather.value!!.main!!.temp_max} \u2103")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row() {
+                            Text(text = "Pressure: ${weather.value!!.main!!.pressure} hPa")
+                            Spacer(modifier = Modifier.width(20.dp))
+                            Text(text = "Humidity: ${weather.value!!.main!!.humidity}%")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row() {
+                            Text(text = "Wind Speed: ${weather.value!!.wind!!.speed} m/s")
+                            Spacer(modifier = Modifier.width(20.dp))
+                            Text(text = "Clouds: ${weather.value!!.clouds!!.all}%")
+                        }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row () {
-                        Text(text = "Min.: ${weather.value!!.main!!.temp_min} \u2103")
-                        Spacer(modifier = Modifier.width(20.dp))
-                        Text(text = "Max.: ${weather.value!!.main!!.temp_max} \u2103")
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row() {
-                        Text(text = "Pressure: ${weather.value!!.main!!.pressure} hPa")
-                        Spacer(modifier = Modifier.width(20.dp))
-                        Text(text = "Humidity: ${weather.value!!.main!!.humidity}%")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row() {
-                        Text(text = "Wind Speed: ${weather.value!!.wind!!.speed} m/s")
-                        Spacer(modifier = Modifier.width(20.dp))
-                        Text(text = "Clouds: ${weather.value!!.clouds!!.all}%")
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (forecast.value != null) {
+                        ShowForecastData(mainViewModel)
+                    } else {
+                        LoadingAnimation(darkMode = darkMode)
                     }
                 }
             }
-
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (forecast.value != null) {
-                    ShowForecastData(mainViewModel)
-                } else {
-                    LoadingAnimation(darkMode = darkMode)
-                }
-            }
+        } else {
+            LoadingAnimation(darkMode = darkMode)
         }
-    } else {
-        LoadingAnimation(darkMode = darkMode)
     }
 }
 
@@ -156,9 +177,10 @@ fun ShowForecastData(mainViewModel: MainViewModel) {
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
-            Row(modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 10.dp, start = 10.dp, end = 10.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 10.dp, start = 10.dp, end = 10.dp)
             ) {
                 Spacer(modifier = Modifier.weight(0.15f))
                 Row(
@@ -171,22 +193,32 @@ fun ShowForecastData(mainViewModel: MainViewModel) {
                 }
             }
 
-            Row(modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp)) {
-                Column(modifier = Modifier
-                    .weight(0.15f)
-                    .height(180.dp)
-                    .fillMaxWidth(),
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(10.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(0.15f)
+                        .height(180.dp)
+                        .fillMaxWidth(),
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Image(painter = painterResource(id = R.drawable.ic_sun), contentDescription = "Day icon")
-                    Image(painter = painterResource(id = R.drawable.ic_moon), contentDescription = "Night icon")
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_sun),
+                        contentDescription = "Day icon"
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_moon),
+                        contentDescription = "Night icon"
+                    )
                 }
 
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .weight(0.85f),
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(0.85f),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
