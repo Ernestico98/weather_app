@@ -178,7 +178,7 @@ fun ShowPlacesList(
                             mainViewModel.setForecastResponse(null)
                             mainViewModel.setLocation(null, null)
 
-                            mainViewModel.setSelectedLocation(data.name)
+                            mainViewModel.setSelectedLocation(data.name + ", " + data.country)
                             mainViewModel.setLocation(lon = data.lon!!, lat = data.lat!!)
                             mainViewModel.fetchWeather(lon = data.lon, lat = data.lat)
                             mainViewModel.fetchForecast(lon = data.lon, lat = data.lat)

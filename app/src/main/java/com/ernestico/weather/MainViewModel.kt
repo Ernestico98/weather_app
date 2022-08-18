@@ -23,6 +23,7 @@ import com.ernestico.weather.data.geo_response.GeoDataItem
 import com.ernestico.weather.data.weather_response.Main
 import com.ernestico.weather.data.weather_response.Weather
 import com.ernestico.weather.data.weather_response.WeatherData
+import com.ernestico.weather.database.WeatherDataDao
 import com.ernestico.weather.database.WeatherDataRepository
 import com.ernestico.weather.navigation.BottomNavigationScreens
 import com.google.firebase.Timestamp
@@ -44,6 +45,7 @@ import kotlin.collections.sorted
 import kotlin.collections.sortedBy
 import kotlin.collections.toList
 import kotlin.collections.toSortedMap
+import kotlin.math.abs
 
 private val TAG = "MAIN_VIEW_MODEL"
 
@@ -108,6 +110,7 @@ class MainViewModel(
 
         repository.allItems.observeForever() {
             Log.d(TAG, "TESTING ${it.size}")
+            Log.d(TAG, "TESTING ${it}")
         }
     }
 
@@ -123,13 +126,31 @@ class MainViewModel(
         ForecastApiProvider()
     }
 
+    private val eps = 1e-2
+    fun getFromDatabase(lon: Double, lat : Double) : WeatherData? {
+        // Get latest data for a location on database
+        var weatherDataRow : WeatherData? = null
+        for (row in repository.allItems.value!!) {
+            if (abs(lon - row.coord!!.lon!!) < eps && abs(lat - row.coord!!.lat!!) < eps) {
+                if (weatherDataRow == null || weatherDataRow.dt!! < row.dt!!)
+                    weatherDataRow = row
+            }
+        }
+        return weatherDataRow
+    }
+
     fun fetchWeather(lon: Double, lat: Double) {
         // Checks for internet connection, otherwise try to
         if (checkForInternet(activityContext)) {
             weatherProvider.fetchWeather(lon = lon, lat = lat, cb = this)
         } else {
+            Log.d("ZZZ", "${repository.allItems.value}")
             if (repository.allItems.value != null && repository.allItems.value!!.size > 0) {
-                _weatherResponse.value = repository.allItems.value!![0]
+                val weather = getFromDatabase(lon = lon, lat = lat)
+                if (weather != null)
+                    _weatherResponse.value = weather
+                else
+                    Toast.makeText(activityContext, "Check your connection!", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(activityContext, "Check your connection!", Toast.LENGTH_SHORT).show()
             }
@@ -145,8 +166,8 @@ class MainViewModel(
     }
 
     fun setLocation(lon: Double?, lat: Double?) {
-        _longitude?.value = lon
-        _latitude?.value = lat
+        _longitude.value = lon
+        _latitude.value = lat
     }
 
     fun setTopBarText(text : String) {
@@ -253,10 +274,10 @@ class MainViewModel(
             month.add(date.monthValue.toString())
 
             dayIcon.add(sortedDailyForecast[key]!![3].weather!![0]!!.icon!!)
-            dayTemp.add(sortedDailyForecast[key]!![3].main!!.temp.toString())
+            dayTemp.add(sortedDailyForecast[key]!![3].main!!.temp!!.toInt().toString())
 
             nightIcon.add(sortedDailyForecast[key]!![7].weather!![0]!!.icon!!)
-            nightTemp.add(sortedDailyForecast[key]!![7].main!!.temp.toString())
+            nightTemp.add(sortedDailyForecast[key]!![7].main!!.temp!!.toInt().toString())
         }
 
         _forecastResponse.value = forecast

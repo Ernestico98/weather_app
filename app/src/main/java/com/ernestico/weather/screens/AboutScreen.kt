@@ -48,12 +48,10 @@ fun AboutScreen(
                 .scale(1.3f)
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
-
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp),
+                .padding(start = 20.dp, end = 20.dp),
             elevation = 10.dp,
         ) {
             Column(
