@@ -108,6 +108,7 @@ class MainViewModel(
         _navigationStack.value = Stack<BottomNavigationScreens>()
         _selectedLocation.value = null
 
+        repository.deleteAll()
         repository.allItems.observeForever() {
             Log.d(TAG, "TESTING ${it.size}")
             Log.d(TAG, "TESTING ${it}")
@@ -126,19 +127,6 @@ class MainViewModel(
         ForecastApiProvider()
     }
 
-    private val eps = 1e-2
-    fun getFromDatabase(lon: Double, lat : Double) : WeatherData? {
-        // Get latest data for a location on database
-        var weatherDataRow : WeatherData? = null
-        for (row in repository.allItems.value!!) {
-            if (abs(lon - row.coord!!.lon!!) < eps && abs(lat - row.coord!!.lat!!) < eps) {
-                if (weatherDataRow == null || weatherDataRow.dt!! < row.dt!!)
-                    weatherDataRow = row
-            }
-        }
-        return weatherDataRow
-    }
-
     fun fetchWeather(lon: Double, lat: Double) {
         // Checks for internet connection, otherwise try to
         if (checkForInternet(activityContext)) {
@@ -146,7 +134,9 @@ class MainViewModel(
         } else {
             Log.d("ZZZ", "${repository.allItems.value}")
             if (repository.allItems.value != null && repository.allItems.value!!.size > 0) {
-                val weather = getFromDatabase(lon = lon, lat = lat)
+
+                val weather = GetLatestSavedData().getFromDatabase(lon = lon, lat = lat, Items = repository.allItems.value)
+
                 if (weather != null)
                     _weatherResponse.value = weather
                 else
@@ -202,7 +192,6 @@ class MainViewModel(
         Log.d(TAG, "weather fetch $weather")
 
         _weatherResponse.value = weather
-        repository.deleteAll()
         repository.insertItem(weather)
 
         // Record API hit to firestore database
@@ -235,24 +224,7 @@ class MainViewModel(
         Log.d(TAG, "forecast fetched $forecast")
 
         //Process forecast
-        val sortedForecast = forecast.list!!.sortedBy { item -> item.dt_txt }
-        var dailyForecast = mutableMapOf<String, MutableList<Forecast>>()
-        for (forecast in sortedForecast) {
-            val (date, time) = forecast.dt_txt!!.split(' ')
-            val timeDateUTC = ZonedDateTime.parse(date + "T" + time + "Z")
-            val timeZoneConverted = timeDateUTC.withZoneSameInstant(ZoneId.systemDefault())
-            val convertedDate = timeZoneConverted.toLocalDate().toString()
-
-            if (convertedDate == LocalDate.now().toString())
-                continue
-
-            if (!(convertedDate in dailyForecast))
-                dailyForecast[convertedDate] = mutableListOf<Forecast>()
-
-            dailyForecast[convertedDate]!!.add(forecast)
-        }
-
-        val sortedDailyForecast = dailyForecast.toSortedMap()
+        val sortedDailyForecast = GetSortedDailyForecast().getSortedDailyForcast(forecast)
         val keys = sortedDailyForecast.keys.toList().sorted()
         dayOfTheWeek.clear()
         dayOfTheMonth.clear()

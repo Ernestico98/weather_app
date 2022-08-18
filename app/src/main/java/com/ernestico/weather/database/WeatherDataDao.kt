@@ -9,7 +9,7 @@ import com.ernestico.weather.data.weather_response.WeatherData
 
 @Dao
 interface WeatherDataDao {
-    @Query("SELECT * FROM WeatherData")
+    @Query("SELECT * FROM WeatherData ORDER BY dt ASC")
     fun getItems(): LiveData<List<WeatherData>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

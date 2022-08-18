@@ -6,7 +6,7 @@ import com.ernestico.weather.data.weather_response.WeatherData
 
 private val TAG = "REPOSITORY"
 
-class WeatherDataRepository(private val weatherDataDao: WeatherDataDao) {
+open class WeatherDataRepository(private val weatherDataDao: WeatherDataDao) {
 
     val allItems: LiveData<List<WeatherData>> = weatherDataDao.getItems()
 
