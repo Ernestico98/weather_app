@@ -176,9 +176,12 @@ fun ShowPlacesList(
                             mainViewModel.setUseLocation(false)
                             mainViewModel.setWeatherResponse(null)
                             mainViewModel.setForecastResponse(null)
+                            mainViewModel.setLocation(null, null)
+
                             mainViewModel.setSelectedLocation(data.name)
                             mainViewModel.setLocation(lon = data.lon!!, lat = data.lat!!)
-                            fetchLocationAndWeather(fusedLocationProviderClient, mainViewModel)
+                            mainViewModel.fetchWeather(lon = data.lon, lat = data.lat)
+                            mainViewModel.fetchForecast(lon = data.lon, lat = data.lat)
 
                             mainViewModel.setBottomNavigationIndex(0)
                             mainViewModel.navigationStack.value!!.push(BottomNavigationScreens.Search)

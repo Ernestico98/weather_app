@@ -1,8 +1,13 @@
 package com.ernestico.weather
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -39,7 +44,10 @@ private const val TAG = "MAIN_ACTIVITY"
 
 class MainActivity : ComponentActivity() {
 
-    private val mainViewModel : MainViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels() {
+        MainViewModelFactory((application as AppApplication).repository, this)
+    }
+
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +56,12 @@ class MainActivity : ComponentActivity() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         val preferences = AppPreferences(this)
         createIconMap()
+
+//        if (checkForInternet(this)) {
+//            Toast.makeText(this, "INTERNET", Toast.LENGTH_SHORT).show()
+//        } else {
+//            Toast.makeText(this, "NO INTERNET", Toast.LENGTH_SHORT).show()
+//        }
 
         setContent {
 
@@ -140,7 +154,7 @@ class MainActivity : ComponentActivity() {
                                         WeatherScreen(
                                             mainViewModel = mainViewModel,
                                             darkMode = darkMode,
-                                            fusedLocationProviderClient = fusedLocationProviderClient
+                                            fusedLocationProviderClient = fusedLocationProviderClient,
                                         )
                                     }
                                     composable(BottomNavigationScreens.Search.route) {

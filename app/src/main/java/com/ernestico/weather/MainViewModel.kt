@@ -1,11 +1,16 @@
 package com.ernestico.weather
 
+import android.content.Context
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.ernestico.weather.data.ForecastApiProvider
 import com.ernestico.weather.data.GeoApiProvider
 import com.ernestico.weather.data.WeatherApiProvider
@@ -15,7 +20,10 @@ import com.ernestico.weather.data.cb.WeatherResult
 import com.ernestico.weather.data.forecast_response.Forecast
 import com.ernestico.weather.data.forecast_response.ForecastData
 import com.ernestico.weather.data.geo_response.GeoDataItem
+import com.ernestico.weather.data.weather_response.Main
+import com.ernestico.weather.data.weather_response.Weather
 import com.ernestico.weather.data.weather_response.WeatherData
+import com.ernestico.weather.database.WeatherDataRepository
 import com.ernestico.weather.navigation.BottomNavigationScreens
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.ktx.firestore
@@ -39,7 +47,10 @@ import kotlin.collections.toSortedMap
 
 private val TAG = "MAIN_VIEW_MODEL"
 
-class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
+class MainViewModel(
+    private val repository: WeatherDataRepository,
+    private val activityContext: Context
+) : ViewModel(), WeatherResult, GeoResult, ForecastResult {
 
     private val _geoResponse = MutableLiveData<List<GeoDataItem>?>()
     val geoResponse: LiveData<List<GeoDataItem>?> = _geoResponse
@@ -94,6 +105,10 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
         _selectedIndexBottomNavigation.value = 1
         _navigationStack.value = Stack<BottomNavigationScreens>()
         _selectedLocation.value = null
+
+        repository.allItems.observeForever() {
+            Log.d(TAG, "TESTING ${it.size}")
+        }
     }
 
     private val weatherProvider by lazy {
@@ -109,7 +124,16 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
     }
 
     fun fetchWeather(lon: Double, lat: Double) {
-        weatherProvider.fetchWeather(lon = lon, lat = lat, cb = this)
+        // Checks for internet connection, otherwise try to
+        if (checkForInternet(activityContext)) {
+            weatherProvider.fetchWeather(lon = lon, lat = lat, cb = this)
+        } else {
+            if (repository.allItems.value != null && repository.allItems.value!!.size > 0) {
+                _weatherResponse.value = repository.allItems.value!![0]
+            } else {
+                Toast.makeText(activityContext, "Check your connection!", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     fun fetchGeo(place : String) {
@@ -157,7 +181,10 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
         Log.d(TAG, "weather fetch $weather")
 
         _weatherResponse.value = weather
+        repository.deleteAll()
+        repository.insertItem(weather)
 
+        // Record API hit to firestore database
         val record = WeatherRecord(
             id = _weatherResponse.value!!.id!!,
             timeStamp = Timestamp.now(),
@@ -239,9 +266,9 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
         Log.d(TAG, "forecast fetch failed")
     }
 
+    // This part is to record to firestore the Calls to Weather Api
     private val WEATHER_COLLECTION = "WeatherApiCalls"
 
-    // This part is to record to firestore the Calls to Weather Api
     data class WeatherRecord (
         val id : Int,
         val timeStamp : Timestamp,
@@ -255,5 +282,16 @@ class MainViewModel : ViewModel(), WeatherResult, GeoResult, ForecastResult {
             .set(record)
             .addOnSuccessListener { Log.d(TAG, "Succesfully sent weather record to firestore ${record}") }
             .addOnFailureListener { Log.d(TAG, "Unable to write to firestore. Error: $it") }
+    }
+}
+
+
+class MainViewModelFactory(private val repository: WeatherDataRepository, private val context: Context) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return MainViewModel(repository, context) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -1,6 +1,7 @@
 package com.ernestico.weather.screens
 
 import android.app.Activity
+import android.content.Context
 import android.util.Log
 import android.widget.Space
 import androidx.compose.foundation.*
@@ -47,7 +48,6 @@ fun WeatherScreen(
     mainViewModel: MainViewModel,
     darkMode : MutableState<Boolean>,
     fusedLocationProviderClient: FusedLocationProviderClient
-
 ) {
     mainViewModel.setTopBarText("Weather Status")
 
@@ -59,7 +59,13 @@ fun WeatherScreen(
         state = swipeRefreshState,
         onRefresh = {
                     mainViewModel.setWeatherResponse(null)
-                    fetchLocationAndWeather(fusedLocationProviderClient, mainViewModel)
+                    if (mainViewModel.useLocation.value == true) {
+                        fetchLocationAndWeather(fusedLocationProviderClient, mainViewModel)
+                    } else {
+                        mainViewModel.fetchWeather(lon = mainViewModel.longitude.value!!, lat = mainViewModel.latitude.value!!)
+                        mainViewModel.fetchForecast(lon = mainViewModel.longitude.value!!, lat = mainViewModel.latitude.value!!)
+                    }
+
         },
         indicator = { state, trigger ->
             SwipeRefreshIndicator(
