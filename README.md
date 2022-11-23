@@ -1,6 +1,9 @@
 # weather_app
 Android Weather App
 
+## Instructions
+Download and build using Android Studio.
+
 ## Light main screen
 ![Light main screen](./pictures/light_weather.png)
 
